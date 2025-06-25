@@ -1,8 +1,4 @@
-## 📦 nx-eks-addons-tf`
-
-### 📄 `nx-eks-addons-tf/README.md`
-
-# nx-eks-addons-tf
+## 📦 nx-eks-addons-tf
 
 Terraform module to install Kubernetes add-ons on an existing Amazon EKS cluster. This includes:
 
@@ -11,11 +7,6 @@ Terraform module to install Kubernetes add-ons on an existing Amazon EKS cluster
 - RBAC manifests for autoscaler
 
 ## Requirements
-
-| Name | Version |
-|------|---------|
-| <a name="requirement_helm"></a> [helm](#requirement\_helm) | >= 2.6.0 |
-| <a name="requirement_kubectl"></a> [kubectl](#requirement\_kubectl) | >= 1.14.0 |
 
 | Name      | Version   |
 |-----------|-----------|
@@ -29,6 +20,7 @@ Terraform module to install Kubernetes add-ons on an existing Amazon EKS cluster
 | <a name="provider_helm"></a> [helm](#provider\_helm) | >= 2.6.0 |
 | <a name="provider_kubectl"></a> [kubectl](#provider\_kubectl) | >= 1.14.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | n/a |
+
 
 | Name     | Source              |
 |----------|---------------------|
