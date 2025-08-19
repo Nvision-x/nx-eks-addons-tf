@@ -219,22 +219,4 @@ resource "helm_release" "aws_load_balancer_controller" {
   }
 }
 
-resource "null_resource" "patch_gp2_storageclass" {
-  depends_on = [
-    helm_release.aws_load_balancer_controller
-  ]
-
-  triggers = {
-    cluster_name = var.cluster_name
-    region       = var.region
-  }
-
-  provisioner "local-exec" {
-    command = <<EOT
-      aws eks update-kubeconfig --name ${var.cluster_name} --region ${var.region}
-      kubectl patch storageclass gp2 -p '{"metadata": {"annotations": {"storageclass.kubernetes.io/is-default-class":"true"}}}'
-    EOT
-  }
-}
-
 
