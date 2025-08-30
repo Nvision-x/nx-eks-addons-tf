@@ -49,6 +49,80 @@ variable "cluster_autoscaler_role_arn" {
   type        = string
 }
 
+variable "cluster_autoscaler_version" {
+  description = "Version of the cluster autoscaler image"
+  type        = string
+  default     = "v1.26.2"
+}
+
+variable "autoscaler_replicas" {
+  description = "Number of autoscaler replicas"
+  type        = number
+  default     = 1
+}
+
+variable "autoscaler_resources" {
+  description = "Resource limits and requests for autoscaler"
+  type = object({
+    limits = object({
+      cpu    = string
+      memory = string
+    })
+    requests = object({
+      cpu    = string
+      memory = string
+    })
+  })
+  default = {
+    limits = {
+      cpu    = "100m"
+      memory = "600Mi"
+    }
+    requests = {
+      cpu    = "100m"
+      memory = "600Mi"
+    }
+  }
+}
+
+variable "lb_controller_chart_version" {
+  description = "AWS Load Balancer Controller Helm chart version"
+  type        = string
+  default     = "1.4.4"
+}
+
+variable "autoscaler_log_level" {
+  description = "Log verbosity level for cluster autoscaler"
+  type        = number
+  default     = 4
+  validation {
+    condition     = var.autoscaler_log_level >= 0 && var.autoscaler_log_level <= 10
+    error_message = "Log level must be between 0 and 10."
+  }
+}
+
+variable "autoscaler_expander" {
+  description = "Expander strategy for cluster autoscaler"
+  type        = string
+  default     = "least-waste"
+  validation {
+    condition     = contains(["least-waste", "random", "most-pods", "priority"], var.autoscaler_expander)
+    error_message = "Invalid expander strategy. Must be one of: least-waste, random, most-pods, priority."
+  }
+}
+
+variable "autoscaler_skip_nodes_with_local_storage" {
+  description = "Skip nodes with local storage when deleting"
+  type        = bool
+  default     = false
+}
+
+variable "common_tags" {
+  description = "Common tags to apply to all resources"
+  type        = map(string)
+  default     = {}
+}
+
 
 
 

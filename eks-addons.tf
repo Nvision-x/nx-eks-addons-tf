@@ -1,3 +1,10 @@
+locals {
+  autoscaler_labels = {
+    "k8s-addon" = "cluster-autoscaler.addons.k8s.io"
+    "k8s-app"   = "cluster-autoscaler"
+  }
+}
+
 resource "kubectl_manifest" "service_account" {
   yaml_body = <<-EOF
 apiVersion: v1
@@ -35,6 +42,11 @@ EOF
 }
 
 resource "kubectl_manifest" "role_binding" {
+  depends_on = [
+    kubectl_manifest.service_account,
+    kubectl_manifest.role
+  ]
+  
   yaml_body = <<-EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -116,6 +128,11 @@ EOF
 }
 
 resource "kubectl_manifest" "cluster_role_binding" {
+  depends_on = [
+    kubectl_manifest.service_account,
+    kubectl_manifest.cluster_role
+  ]
+  
   yaml_body = <<-EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -136,6 +153,12 @@ EOF
 }
 
 resource "kubectl_manifest" "deployment" {
+  depends_on = [
+    kubectl_manifest.service_account,
+    kubectl_manifest.cluster_role,
+    kubectl_manifest.cluster_role_binding
+  ]
+  
   yaml_body = <<-EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -145,7 +168,7 @@ metadata:
   labels:
     app: cluster-autoscaler
 spec:
-  replicas: 1
+  replicas: ${var.autoscaler_replicas}
   selector:
     matchLabels:
       app: cluster-autoscaler
@@ -161,22 +184,22 @@ spec:
         fsGroup: 65534
       serviceAccountName: ${var.autoscaler_service_account}
       containers:
-        - image: registry.k8s.io/autoscaling/cluster-autoscaler:v1.26.2
+        - image: registry.k8s.io/autoscaling/cluster-autoscaler:${var.cluster_autoscaler_version}
           name: cluster-autoscaler
           resources:
             limits:
-              cpu: 100m
-              memory: 600Mi
+              cpu: ${var.autoscaler_resources.limits.cpu}
+              memory: ${var.autoscaler_resources.limits.memory}
             requests:
-              cpu: 100m
-              memory: 600Mi
+              cpu: ${var.autoscaler_resources.requests.cpu}
+              memory: ${var.autoscaler_resources.requests.memory}
           command:
             - ./cluster-autoscaler
-            - --v=4
+            - --v=${var.autoscaler_log_level}
             - --stderrthreshold=info
             - --cloud-provider=aws
-            - --skip-nodes-with-local-storage=false
-            - --expander=least-waste
+            - --skip-nodes-with-local-storage=${var.autoscaler_skip_nodes_with_local_storage}
+            - --expander=${var.autoscaler_expander}
             - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/${var.cluster_name}
 EOF
 }
@@ -186,37 +209,34 @@ resource "helm_release" "aws_load_balancer_controller" {
   repository = "https://aws.github.io/eks-charts"
   chart      = "aws-load-balancer-controller"
   namespace  = var.namespace
-  version    = "1.4.4"
+  version    = var.lb_controller_chart_version
 
-  set {
-    name  = "clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "serviceAccount.create"
-    value = "true"
-  }
-
-  set {
-    name  = "serviceAccount.name"
-    value = var.lb_controller_service_account
-  }
-
-  set {
-    name  = "region"
-    value = var.region
-  }
-
-  set {
-    name  = "vpcId"
-    value = var.vpc_id
-  }
-
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.lb_controller_role_arn
-  }
+  set = [
+    {
+      name  = "clusterName"
+      value = var.cluster_name
+    },
+    {
+      name  = "serviceAccount.create"
+      value = "true"
+    },
+    {
+      name  = "serviceAccount.name"
+      value = var.lb_controller_service_account
+    },
+    {
+      name  = "region"
+      value = var.region
+    },
+    {
+      name  = "vpcId"
+      value = var.vpc_id
+    },
+    {
+      name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = var.lb_controller_role_arn
+    }
+  ]
 }
 
 
