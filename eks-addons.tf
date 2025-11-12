@@ -184,8 +184,9 @@ spec:
         fsGroup: 65534
       serviceAccountName: ${var.autoscaler_service_account}
       containers:
-        - image: registry.k8s.io/autoscaling/cluster-autoscaler:${var.cluster_autoscaler_version}
+        - image: ${var.autoscaler_image_repository}:${var.cluster_autoscaler_version}
           name: cluster-autoscaler
+          imagePullPolicy: IfNotPresent
           resources:
             limits:
               cpu: ${var.autoscaler_resources.limits.cpu}
@@ -239,6 +240,12 @@ resource "helm_release" "aws_load_balancer_controller" {
   set {
     name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
     value = var.lb_controller_role_arn
+  }
+
+  # Use regional ECR to leverage VPC endpoints and avoid cross-region timeouts
+  set {
+    name  = "image.repository"
+    value = "602401143452.dkr.ecr.${var.region}.amazonaws.com/amazon/aws-load-balancer-controller"
   }
 }
 

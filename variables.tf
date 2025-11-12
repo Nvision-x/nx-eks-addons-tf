@@ -55,6 +55,12 @@ variable "cluster_autoscaler_version" {
   default     = "v1.26.2"
 }
 
+variable "autoscaler_image_repository" {
+  description = "Container image repository for cluster autoscaler. Use regional ECR to leverage VPC endpoints."
+  type        = string
+  default     = "registry.k8s.io/autoscaling/cluster-autoscaler"
+}
+
 variable "autoscaler_replicas" {
   description = "Number of autoscaler replicas"
   type        = number
