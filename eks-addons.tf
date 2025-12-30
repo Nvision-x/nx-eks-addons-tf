@@ -226,40 +226,37 @@ resource "helm_release" "aws_load_balancer_controller" {
   namespace  = var.namespace
   version    = var.lb_controller_chart_version
 
-  set {
-    name  = "clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "serviceAccount.create"
-    value = "true"
-  }
-
-  set {
-    name  = "serviceAccount.name"
-    value = var.lb_controller_service_account
-  }
-
-  set {
-    name  = "region"
-    value = var.region
-  }
-
-  set {
-    name  = "vpcId"
-    value = var.vpc_id
-  }
-
+  # Helm 3.x syntax - set as list
+  set = concat([
+    {
+      name  = "clusterName"
+      value = var.cluster_name
+    },
+    {
+      name  = "serviceAccount.create"
+      value = "true"
+    },
+    {
+      name  = "serviceAccount.name"
+      value = var.lb_controller_service_account
+    },
+    {
+      name  = "region"
+      value = var.region
+    },
+    {
+      name  = "vpcId"
+      value = var.vpc_id
+    }
+  ],
   # Only add IRSA annotation when enable_irsa is true
   # For Pod Identity, no annotation is needed
-  dynamic "set" {
-    for_each = var.enable_irsa ? [1] : []
-    content {
+  var.enable_irsa ? [
+    {
       name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
       value = var.lb_controller_role_arn
     }
-  }
+  ] : [])
 }
 
 
