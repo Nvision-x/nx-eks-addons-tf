@@ -49,6 +49,12 @@ variable "cluster_autoscaler_role_arn" {
   type        = string
 }
 
+variable "enable_irsa" {
+  description = "Enable IRSA annotations on ServiceAccounts. Set to false for Pod Identity."
+  type        = bool
+  default     = false
+}
+
 variable "cluster_autoscaler_version" {
   description = "Version of the cluster autoscaler image"
   type        = string

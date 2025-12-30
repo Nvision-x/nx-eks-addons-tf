@@ -6,7 +6,7 @@ locals {
 }
 
 resource "kubectl_manifest" "service_account" {
-  yaml_body = <<-EOF
+  yaml_body = var.enable_irsa ? <<-EOF
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -17,6 +17,16 @@ metadata:
   namespace: ${var.namespace}
   annotations:
     eks.amazonaws.com/role-arn: ${var.cluster_autoscaler_role_arn}
+EOF
+  : <<-EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+  name: ${var.autoscaler_service_account}
+  namespace: ${var.namespace}
 EOF
 }
 
@@ -236,9 +246,14 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = var.vpc_id
   }
 
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.lb_controller_role_arn
+  # Only add IRSA annotation when enable_irsa is true
+  # For Pod Identity, no annotation is needed
+  dynamic "set" {
+    for_each = var.enable_irsa ? [1] : []
+    content {
+      name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = var.lb_controller_role_arn
+    }
   }
 }
 
