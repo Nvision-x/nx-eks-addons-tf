@@ -3,10 +3,9 @@ locals {
     "k8s-addon" = "cluster-autoscaler.addons.k8s.io"
     "k8s-app"   = "cluster-autoscaler"
   }
-}
 
-resource "kubectl_manifest" "service_account" {
-  yaml_body = var.enable_irsa ? <<-EOF
+  # ServiceAccount YAML with IRSA annotation
+  sa_yaml_irsa = <<-EOF
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -18,7 +17,9 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: ${var.cluster_autoscaler_role_arn}
 EOF
-  : <<-EOF
+
+  # ServiceAccount YAML without IRSA annotation (for Pod Identity)
+  sa_yaml_pod_identity = <<-EOF
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -28,6 +29,10 @@ metadata:
   name: ${var.autoscaler_service_account}
   namespace: ${var.namespace}
 EOF
+}
+
+resource "kubectl_manifest" "service_account" {
+  yaml_body = var.enable_irsa ? local.sa_yaml_irsa : local.sa_yaml_pod_identity
 }
 
 resource "kubectl_manifest" "role" {
