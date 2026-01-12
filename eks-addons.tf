@@ -216,6 +216,9 @@ spec:
             - --skip-nodes-with-local-storage=${var.autoscaler_skip_nodes_with_local_storage}
             - --expander=${var.autoscaler_expander}
             - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/${var.cluster_name}
+          env:
+            - name: AWS_REGION
+              value: ${var.region}
 EOF
 }
 
