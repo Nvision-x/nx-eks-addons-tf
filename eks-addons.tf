@@ -3,10 +3,9 @@ locals {
     "k8s-addon" = "cluster-autoscaler.addons.k8s.io"
     "k8s-app"   = "cluster-autoscaler"
   }
-}
 
-resource "kubectl_manifest" "service_account" {
-  yaml_body = <<-EOF
+  # ServiceAccount YAML with IRSA annotation
+  sa_yaml_irsa = <<-EOF
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -18,6 +17,22 @@ metadata:
   annotations:
     eks.amazonaws.com/role-arn: ${var.cluster_autoscaler_role_arn}
 EOF
+
+  # ServiceAccount YAML without IRSA annotation (for Pod Identity)
+  sa_yaml_pod_identity = <<-EOF
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    k8s-addon: cluster-autoscaler.addons.k8s.io
+    k8s-app: cluster-autoscaler
+  name: ${var.autoscaler_service_account}
+  namespace: ${var.namespace}
+EOF
+}
+
+resource "kubectl_manifest" "service_account" {
+  yaml_body = var.enable_irsa ? local.sa_yaml_irsa : local.sa_yaml_pod_identity
 }
 
 resource "kubectl_manifest" "role" {
@@ -112,7 +127,7 @@ rules:
     resources: ["statefulsets", "replicasets", "daemonsets"]
     verbs: ["watch", "list", "get"]
   - apiGroups: ["storage.k8s.io"]
-    resources: ["storageclasses", "csinodes", "csidrivers", "csistoragecapacities"]
+    resources: ["storageclasses", "csinodes", "csidrivers", "csistoragecapacities", "volumeattachments"]
     verbs: ["watch", "list", "get"]
   - apiGroups: ["batch", "extensions"]
     resources: ["jobs"]
@@ -201,6 +216,9 @@ spec:
             - --skip-nodes-with-local-storage=${var.autoscaler_skip_nodes_with_local_storage}
             - --expander=${var.autoscaler_expander}
             - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/${var.cluster_name}
+          env:
+            - name: AWS_REGION
+              value: ${var.region}
 EOF
 }
 
@@ -211,35 +229,37 @@ resource "helm_release" "aws_load_balancer_controller" {
   namespace  = var.namespace
   version    = var.lb_controller_chart_version
 
-  set {
-    name  = "clusterName"
-    value = var.cluster_name
-  }
-
-  set {
-    name  = "serviceAccount.create"
-    value = "true"
-  }
-
-  set {
-    name  = "serviceAccount.name"
-    value = var.lb_controller_service_account
-  }
-
-  set {
-    name  = "region"
-    value = var.region
-  }
-
-  set {
-    name  = "vpcId"
-    value = var.vpc_id
-  }
-
-  set {
-    name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-    value = var.lb_controller_role_arn
-  }
+  # Helm 3.x syntax - set as list
+  set = concat([
+    {
+      name  = "clusterName"
+      value = var.cluster_name
+    },
+    {
+      name  = "serviceAccount.create"
+      value = "true"
+    },
+    {
+      name  = "serviceAccount.name"
+      value = var.lb_controller_service_account
+    },
+    {
+      name  = "region"
+      value = var.region
+    },
+    {
+      name  = "vpcId"
+      value = var.vpc_id
+    }
+  ],
+  # Only add IRSA annotation when enable_irsa is true
+  # For Pod Identity, no annotation is needed
+  var.enable_irsa ? [
+    {
+      name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+      value = var.lb_controller_role_arn
+    }
+  ] : [])
 }
 
 
