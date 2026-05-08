@@ -262,4 +262,17 @@ resource "helm_release" "aws_load_balancer_controller" {
   ] : [])
 }
 
+resource "helm_release" "argocd" {
+  count = var.enable_argocd ? 1 : 0
+
+  name             = "argocd"
+  repository       = "https://argoproj.github.io/argo-helm"
+  chart            = "argo-cd"
+  namespace        = var.argocd_namespace
+  version          = var.argocd_chart_version
+  create_namespace = true
+
+  values = [var.argocd_values_yaml]
+}
+
 

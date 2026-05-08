@@ -129,6 +129,32 @@ variable "common_tags" {
   default     = {}
 }
 
+# ----------------------------- ArgoCD -----------------------------
+
+variable "enable_argocd" {
+  description = "Install ArgoCD via Helm"
+  type        = bool
+  default     = false
+}
+
+variable "argocd_chart_version" {
+  description = "argo-cd Helm chart version. Required when enable_argocd = true."
+  type        = string
+  default     = ""
+}
+
+variable "argocd_namespace" {
+  description = "Namespace ArgoCD installs into"
+  type        = string
+  default     = "argocd"
+}
+
+variable "argocd_values_yaml" {
+  description = "ArgoCD Helm values as a YAML string"
+  type        = string
+  default     = ""
+}
+
 
 
 
