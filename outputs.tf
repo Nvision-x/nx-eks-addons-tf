@@ -42,3 +42,8 @@ output "argocd_chart_version" {
   description = "Installed argo-cd Helm chart version (null when enable_argocd = false)"
   value       = try(helm_release.argocd[0].version, null)
 }
+
+output "argocd_oci_repo_secret_name" {
+  description = "Name of the ArgoCD repository Secret for the OCI Helm registry (null when not created)"
+  value       = try(kubectl_manifest.argocd_oci_repo_secret[0].name, null)
+}

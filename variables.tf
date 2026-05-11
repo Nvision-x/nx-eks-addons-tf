@@ -155,6 +155,22 @@ variable "argocd_values_yaml" {
   default     = ""
 }
 
+variable "argocd_oci_repo_url" {
+  description = "OCI Helm registry URL ArgoCD pulls charts from. Used as the url field on the registered repository Secret."
+  type        = string
+  default     = "ghcr.io/nvision-x"
+}
+
+variable "argocd_oci_repo_credentials" {
+  description = "Credentials for the ArgoCD OCI Helm repository. When non-null and enable_argocd = true, a Secret labeled argocd.argoproj.io/secret-type=repository is created in argocd_namespace. Leave null to skip (public registry or external secret management)."
+  type = object({
+    username = string
+    password = string
+  })
+  sensitive = true
+  default   = null
+}
+
 
 
 

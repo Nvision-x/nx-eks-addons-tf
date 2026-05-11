@@ -275,4 +275,31 @@ resource "helm_release" "argocd" {
   values = [var.argocd_values_yaml]
 }
 
+resource "kubectl_manifest" "argocd_oci_repo_secret" {
+  count = var.enable_argocd && var.argocd_oci_repo_credentials != null ? 1 : 0
+
+  depends_on = [helm_release.argocd]
+
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "Secret"
+    metadata = {
+      name      = "argocd-helm-oci-repo"
+      namespace = var.argocd_namespace
+      labels = {
+        "argocd.argoproj.io/secret-type" = "repository"
+      }
+    }
+    type = "Opaque"
+    stringData = {
+      type      = "helm"
+      name      = "argocd-helm-oci-repo"
+      url       = var.argocd_oci_repo_url
+      enableOCI = "true"
+      username  = var.argocd_oci_repo_credentials.username
+      password  = var.argocd_oci_repo_credentials.password
+    }
+  })
+}
+
 
