@@ -139,6 +139,13 @@ rules:
     resourceNames: ["cluster-autoscaler"]
     resources: ["leases"]
     verbs: ["get", "update"]
+  # Dynamic Resource Allocation (DRA). cluster-autoscaler v1.30+ starts informers
+  # for the resource.k8s.io APIs by default; without these read permissions the
+  # informers fail to sync, WaitForCacheSync blocks, and the main scaling loop
+  # never runs (pods sit Pending, no nodes added). Matches upstream CA RBAC.
+  - apiGroups: ["resource.k8s.io"]
+    resources: ["resourceclaims", "resourceclaimtemplates", "resourceslices", "deviceclasses"]
+    verbs: ["get", "list", "watch"]
 EOF
 }
 
