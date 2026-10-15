@@ -94,7 +94,7 @@ variable "autoscaler_resources" {
 variable "lb_controller_chart_version" {
   description = "AWS Load Balancer Controller Helm chart version. Requires 1.7.0+ for Pod Identity support."
   type        = string
-  default     = "1.10.0"
+  default     = "3.6.0"
 }
 
 variable "autoscaler_log_level" {
