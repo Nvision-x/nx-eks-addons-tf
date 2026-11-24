@@ -9,6 +9,10 @@ on:
   # See the manual-run runbook.
   workflow_dispatch:
 
+# calver-release tags and publishes, so the caller must grant it write
+permissions:
+  contents: write
+
 jobs:
   release:
     uses: Nvision-x/shared-workflows-public/.github/workflows/calver-release.yml@main
