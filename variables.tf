@@ -97,6 +97,18 @@ variable "lb_controller_chart_version" {
   default     = "1.10.0"
 }
 
+variable "autoscaler_initial_node_group_backoff_duration" {
+  description = "How long cluster-autoscaler waits before retrying a node group whose scale-up failed (e.g. InsufficientInstanceCapacity)"
+  type        = string
+  default     = "5m"
+}
+
+variable "autoscaler_max_node_group_backoff_duration" {
+  description = "Upper bound of cluster-autoscaler's exponential backoff for a failing node group. Lower it for scarce capacity (GPU) so a scale-up retries soon after capacity returns."
+  type        = string
+  default     = "30m"
+}
+
 variable "autoscaler_log_level" {
   description = "Log verbosity level for cluster autoscaler"
   type        = number

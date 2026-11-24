@@ -61,7 +61,7 @@ resource "kubectl_manifest" "role_binding" {
     kubectl_manifest.service_account,
     kubectl_manifest.role
   ]
-  
+
   yaml_body = <<-EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -154,7 +154,7 @@ resource "kubectl_manifest" "cluster_role_binding" {
     kubectl_manifest.service_account,
     kubectl_manifest.cluster_role
   ]
-  
+
   yaml_body = <<-EOF
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -180,7 +180,7 @@ resource "kubectl_manifest" "deployment" {
     kubectl_manifest.cluster_role,
     kubectl_manifest.cluster_role_binding
   ]
-  
+
   yaml_body = <<-EOF
 apiVersion: apps/v1
 kind: Deployment
@@ -222,6 +222,8 @@ spec:
             - --cloud-provider=aws
             - --skip-nodes-with-local-storage=${var.autoscaler_skip_nodes_with_local_storage}
             - --expander=${var.autoscaler_expander}
+            - --initial-node-group-backoff-duration=${var.autoscaler_initial_node_group_backoff_duration}
+            - --max-node-group-backoff-duration=${var.autoscaler_max_node_group_backoff_duration}
             - --node-group-auto-discovery=asg:tag=k8s.io/cluster-autoscaler/enabled,k8s.io/cluster-autoscaler/${var.cluster_name}
           env:
             - name: AWS_REGION
@@ -258,14 +260,14 @@ resource "helm_release" "aws_load_balancer_controller" {
       name  = "vpcId"
       value = var.vpc_id
     }
-  ],
-  # Only add IRSA annotation when enable_irsa is true
-  # For Pod Identity, no annotation is needed
-  var.enable_irsa ? [
-    {
-      name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
-      value = var.lb_controller_role_arn
-    }
+    ],
+    # Only add IRSA annotation when enable_irsa is true
+    # For Pod Identity, no annotation is needed
+    var.enable_irsa ? [
+      {
+        name  = "serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+        value = var.lb_controller_role_arn
+      }
   ] : [])
 }
 
