@@ -174,6 +174,24 @@ subjects:
 EOF
 }
 
+# Read by --expander=priority; higher number wins. Keys are priorities, values ASG-name regexes.
+resource "kubectl_manifest" "priority_expander" {
+  count = length(var.autoscaler_priorities) > 0 ? 1 : 0
+
+  yaml_body = yamlencode({
+    apiVersion = "v1"
+    kind       = "ConfigMap"
+    metadata = {
+      name      = "cluster-autoscaler-priority-expander"
+      namespace = var.namespace
+    }
+    data = {
+      # Unquoted integer keys; CA unmarshals into map[int][]string.
+      priorities = join("", [for k, v in var.autoscaler_priorities : "${tonumber(k)}:\n${join("", [for r in v : "  - ${jsonencode(r)}\n"])}"])
+    }
+  })
+}
+
 resource "kubectl_manifest" "deployment" {
   depends_on = [
     kubectl_manifest.service_account,
