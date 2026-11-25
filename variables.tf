@@ -129,6 +129,12 @@ variable "autoscaler_expander" {
   }
 }
 
+variable "autoscaler_priorities" {
+  description = "Priority expander config: map of priority (higher wins) to list of ASG-name regexes. Used when autoscaler_expander = \"priority\"; empty = no ConfigMap."
+  type        = map(list(string))
+  default     = {}
+}
+
 variable "autoscaler_skip_nodes_with_local_storage" {
   description = "Skip nodes with local storage when deleting"
   type        = bool
